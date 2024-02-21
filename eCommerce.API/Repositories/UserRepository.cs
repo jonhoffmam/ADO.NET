@@ -38,22 +38,7 @@ public class UserRepository : IUserRepository
             SqlDataReader reader = command.ExecuteReader();
 
             while (reader.Read())
-            {
-                User user = new()
-                {
-                    Id = reader.GetInt32("Id"),
-                    Name = reader.GetString("Name"),
-                    Email = reader.GetString("Email"),
-                    Gender = Convert.ToChar(reader.GetString("Gender")),
-                    RG = reader.GetString("RG"),
-                    CPF = reader.GetString("CPF"),
-                    MothersName = reader.GetString("MothersName"),
-                    Status = Convert.ToChar(reader.GetString("Status")),
-                    RegistrationDate = reader.GetDateTimeOffset(8)
-                };
-
-                users.Add(user);
-            }
+                users.Add(SetUser(reader));
             
         }
         finally
@@ -66,7 +51,43 @@ public class UserRepository : IUserRepository
 
     public User Get(int id)
     {
-        return _db.FirstOrDefault(user => user.Id == id);
+        User user = null;
+
+        try
+        {
+            SqlCommand command = new("SELECT * FROM Users WHERE Id = @Id", (SqlConnection)_connection);
+            command.Parameters.AddWithValue("@Id", id);
+
+            _connection.Open();
+
+            SqlDataReader reader = command.ExecuteReader();
+
+            while (reader.Read())
+                user = SetUser(reader);
+
+        }
+        finally
+        {
+            _connection.Close();
+        }
+
+        return user;
+    }
+
+    private User SetUser(SqlDataReader reader)
+    {
+        return new()
+        {
+            Id = reader.GetInt32("Id"),
+            Name = reader.GetString("Name"),
+            Email = reader.GetString("Email"),
+            Gender = Convert.ToChar(reader.GetString("Gender")),
+            RG = reader.GetString("RG"),
+            CPF = reader.GetString("CPF"),
+            MothersName = reader.GetString("MothersName"),
+            Status = Convert.ToChar(reader.GetString("Status")),
+            RegistrationDate = reader.GetDateTimeOffset(8)
+        };
     }
 
     public void Insert(User user)
