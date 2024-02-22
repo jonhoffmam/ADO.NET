@@ -74,34 +74,58 @@ public class UserRepository : IUserRepository
         return user;
     }
 
-    private User SetUser(SqlDataReader reader)
+    public User Insert(User user)
     {
-        return new()
+        try
         {
-            Id = reader.GetInt32("Id"),
-            Name = reader.GetString("Name"),
-            Email = reader.GetString("Email"),
-            Gender = Convert.ToChar(reader.GetString("Gender")),
-            RG = reader.GetString("RG"),
-            CPF = reader.GetString("CPF"),
-            MothersName = reader.GetString("MothersName"),
-            Status = Convert.ToChar(reader.GetString("Status")),
-            RegistrationDate = reader.GetDateTimeOffset(8)
-        };
-    }
+            const string cmdText = @"INSERT INTO Users
+                                        (Name, Email, Gender, RG, CPF, MothersName, Status, RegistrationDate)
+                                       VALUES
+                                        (@Name, @Email, @Gender, @RG, @CPF, @MothersName, @Status, @RegistrationDate);
+                                     SELECT CAST(scope_identity() AS int)";
 
-    public void Insert(User user)
-    {
-        User lastUser = _db.LastOrDefault();
 
-        //user.Id = lastUser is null ? 1 : (lastUser.Id + 1);
+            SqlCommand command = new(cmdText, (SqlConnection)_connection);
+            command.Parameters.AddWithValue("@Name", user.Name);
+            command.Parameters.AddWithValue("@Email", user.Email);
+            command.Parameters.AddWithValue("@Gender", user.Gender);
+            command.Parameters.AddWithValue("@RG", user.Rg);
+            command.Parameters.AddWithValue("@CPF", user.Cpf);
+            command.Parameters.AddWithValue("@MothersName", user.MothersName);
+            command.Parameters.AddWithValue("@Status", user.Status);
+            command.Parameters.AddWithValue("@RegistrationDate", user.RegistrationDate);
 
-        _db.Add(user);
+            _connection.Open();
+
+            user.Id = (int)command.ExecuteScalar()!;
+
+            return user;
+        }
+        finally
+        {
+            _connection.Close();
+        }
     }
 
     public void Update(User user)
     {
         Delete(user.Id);
         _db.Add(user);
+    }
+
+    private static User SetUser(SqlDataReader reader)
+    {
+        return new User()
+        {
+            Id = reader.GetInt32("Id"),
+            Name = reader.GetString("Name"),
+            Email = reader.GetString("Email"),
+            Gender = Convert.ToChar(reader.GetString("Gender")),
+            Rg = reader.GetString("RG"),
+            Cpf = reader.GetString("CPF"),
+            MothersName = reader.GetString("MothersName"),
+            Status = Convert.ToChar(reader.GetString("Status")),
+            RegistrationDate = reader.GetDateTimeOffset(8)
+        };
     }
 }

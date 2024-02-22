@@ -2,12 +2,12 @@
 
 public class User
 {
-    public int Id { get; init; }
+    public int Id { get; set;}
     public string Name { get; set; }
     public string Email { get; set; }
     public char Gender { get; set; }
-    public string RG { get; set; }
-    public string CPF { get; set; }
+    public string Rg { get; set; }
+    public string Cpf { get; set; }
     public string MothersName { get; set; }
     public char Status { get; set; }
     public DateTimeOffset RegistrationDate { get; set; }

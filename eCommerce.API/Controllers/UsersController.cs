@@ -21,7 +21,7 @@ namespace eCommerce.API.Controllers
             return Ok(_userRepository.Get());
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("{id:int}")]
         public IActionResult Get(int id)
         {
             User user = _userRepository.Get(id);
@@ -42,7 +42,7 @@ namespace eCommerce.API.Controllers
             return Ok(user);
         }
 
-        [HttpDelete("{id}")]
+        [HttpDelete("{id:int}")]
         public IActionResult Delete(int id)
         {
             _userRepository.Delete(id);
