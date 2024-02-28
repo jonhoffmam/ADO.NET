@@ -13,16 +13,21 @@ public class UserRepository : IUserRepository
         _connection = new SqlConnection(@"Data Source=(localdb)\MSSQLLocalDB;Initial Catalog=eCommerce-ADO.NET;Integrated Security=True;Connect Timeout=30;Encrypt=False;Trust Server Certificate=False;Application Intent=ReadWrite;Multi Subnet Failover=False");
     }
 
-    private static IList<User> _db = new List<User>()
-    {
-        new() { Id = 1, Name = "Juan Fernandez", Email = "juan.fernandez@email.com" },
-        new() { Id = 2, Name = "Maria Lupita", Email = "Maria.lupita@email.com" },
-        new() { Id = 3, Name = "Ramirez Gonzalez", Email = "ramirez.Gonzalez@email.com" },
-    };
-
     public void Delete(int id)
     {
-        _db.Remove(Get(id));
+        try
+        {
+            SqlCommand command = new("DELETE FROM Users WHERE Id = @Id", (SqlConnection)_connection);
+            command.Parameters.AddWithValue("@Id", id);
+
+            _connection.Open();
+
+            command.ExecuteNonQuery();
+        }
+        finally
+        {
+            _connection.Close();
+        }
     }
 
     public IList<User> Get()
