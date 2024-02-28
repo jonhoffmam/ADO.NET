@@ -119,7 +119,8 @@ public class UserRepository : IUserRepository
                                         CPF = @CPF,
                                         MothersName = @MothersName,
                                         Status = @Status,
-                                        RegistrationDate = @RegistrationDate";
+                                        RegistrationDate = @RegistrationDate
+                                    WHERE Id = @Id";
 
             SqlCommand command = new(cmdText, (SqlConnection)_connection);
             command.Parameters.AddWithValue("@Name", user.Name);
@@ -130,6 +131,7 @@ public class UserRepository : IUserRepository
             command.Parameters.AddWithValue("@MothersName", user.MothersName);
             command.Parameters.AddWithValue("@Status", user.Status);
             command.Parameters.AddWithValue("@RegistrationDate", user.RegistrationDate);
+            command.Parameters.AddWithValue("@Id", user.Id);
 
             _connection.Open();
 
