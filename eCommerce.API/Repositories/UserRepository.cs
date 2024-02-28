@@ -109,8 +109,37 @@ public class UserRepository : IUserRepository
 
     public void Update(User user)
     {
-        Delete(user.Id);
-        _db.Add(user);
+        try
+        {
+            const string cmdText = @"UPDATE Users SET
+                                        Name = @Name,
+                                        Email = @Email,
+                                        Gender = @Gender,
+                                        RG = @RG,
+                                        CPF = @CPF,
+                                        MothersName = @MothersName,
+                                        Status = @Status,
+                                        RegistrationDate = @RegistrationDate";
+
+            SqlCommand command = new(cmdText, (SqlConnection)_connection);
+            command.Parameters.AddWithValue("@Name", user.Name);
+            command.Parameters.AddWithValue("@Email", user.Email);
+            command.Parameters.AddWithValue("@Gender", user.Gender);
+            command.Parameters.AddWithValue("@RG", user.Rg);
+            command.Parameters.AddWithValue("@CPF", user.Cpf);
+            command.Parameters.AddWithValue("@MothersName", user.MothersName);
+            command.Parameters.AddWithValue("@Status", user.Status);
+            command.Parameters.AddWithValue("@RegistrationDate", user.RegistrationDate);
+
+            _connection.Open();
+
+            command.ExecuteNonQuery();
+        }
+        finally
+        {
+            _connection.Close();
+        }
+        
     }
 
     private static User SetUser(SqlDataReader reader)
