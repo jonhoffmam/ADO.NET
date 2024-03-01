@@ -1,4 +1,5 @@
-﻿using eCommerce.API.Models;
+﻿using System.Collections.ObjectModel;
+using eCommerce.API.Models;
 using Microsoft.Data.SqlClient;
 using System.Data;
 
@@ -30,20 +31,53 @@ public class UserRepository : IUserRepository
         }
     }
 
-    public IList<User> Get()
+    public HashSet<User> Get()
     {
-        IList<User> users = new List<User>();
+        var users = new HashSet<User>();
     
         try
         {
-            SqlCommand command = new("SELECT * FROM Users", (SqlConnection)_connection);
+            const string cmdText = @"SELECT
+	                                    u.Id,
+	                                    u.Name,
+                                        u.Email,
+	                                    u.Gender,
+	                                    u.RG,
+	                                    u.CPF,
+	                                    u.MothersName,
+	                                    u.Status,
+	                                    u.RegistrationDate,
+	                                    c.Id AS ContactId,
+	                                    c.Telephone,
+	                                    c.CellPhone,
+	                                    da.Id AS DeliveryAddressId,
+	                                    da.NameAddress,
+	                                    da.ZipCode,
+	                                    da.State,
+	                                    da.City,
+	                                    da.District,
+	                                    da.Address,
+	                                    da.Number,
+	                                    da.Adjunct
+                                    FROM
+	                                    Users u
+	                                    LEFT JOIN Contacts c ON c.UserId = u.Id
+	                                    LEFT JOIN DeliveryAddresses da ON da.UserId = u.Id";
+
+            SqlCommand command = new(cmdText, (SqlConnection)_connection);
 
             _connection.Open();
 
             SqlDataReader reader = command.ExecuteReader();
 
+            User user = null;
+
             while (reader.Read())
-                users.Add(SetUser(reader));
+            {
+                SetUser(reader, ref user);
+
+                users.Add(user);
+            }
             
         }
         finally
@@ -60,7 +94,37 @@ public class UserRepository : IUserRepository
 
         try
         {
-            SqlCommand command = new("SELECT * FROM Users WHERE Id = @Id", (SqlConnection)_connection);
+            const string cmdText = @"SELECT
+	                                    u.Id,
+	                                    u.Name,
+                                        u.Email,
+	                                    u.Gender,
+	                                    u.RG,
+	                                    u.CPF,
+	                                    u.MothersName,
+	                                    u.Status,
+	                                    u.RegistrationDate,
+	                                    c.Id AS ContactId,
+	                                    c.Telephone,
+	                                    c.CellPhone,
+	                                    da.Id AS DeliveryAddressId,
+	                                    da.NameAddress,
+	                                    da.ZipCode,
+	                                    da.State,
+	                                    da.City,
+	                                    da.District,
+	                                    da.Address,
+	                                    da.Number,
+	                                    da.Adjunct
+                                    FROM
+	                                    Users u
+	                                    LEFT JOIN Contacts c ON c.UserId = u.Id
+	                                    LEFT JOIN DeliveryAddresses da ON da.UserId = u.Id
+                                    WHERE
+	                                    u.Id = @Id";
+                                    
+
+            SqlCommand command = new(cmdText, (SqlConnection)_connection);
             command.Parameters.AddWithValue("@Id", id);
 
             _connection.Open();
@@ -68,7 +132,7 @@ public class UserRepository : IUserRepository
             SqlDataReader reader = command.ExecuteReader();
 
             while (reader.Read())
-                user = SetUser(reader);
+                SetUser(reader, ref user);
 
         }
         finally
@@ -149,11 +213,16 @@ public class UserRepository : IUserRepository
         
     }
 
-    private static User SetUser(SqlDataReader reader)
+    private static void SetUser(SqlDataReader reader, ref User user)
     {
-        return new User()
+        int userId = reader.GetInt32("Id");
+
+        if (user is not null && userId != user.Id)
+            user = null;
+
+        user ??= new User
         {
-            Id = reader.GetInt32("Id"),
+            Id = userId,
             Name = reader.GetString("Name"),
             Email = reader.GetString("Email"),
             Gender = Convert.ToChar(reader.GetString("Gender")),
@@ -161,7 +230,29 @@ public class UserRepository : IUserRepository
             Cpf = reader.GetString("CPF"),
             MothersName = reader.GetString("MothersName"),
             Status = Convert.ToChar(reader.GetString("Status")),
-            RegistrationDate = reader.GetDateTimeOffset(8)
+            RegistrationDate = reader.GetDateTimeOffset(8),
+            Contact = new Contact
+            {
+                Id = reader.GetInt32("ContactId"),
+                UserId = userId,
+                Telephone = reader.GetString("Telephone"),
+                CellPhone = reader.GetString("CellPhone")
+            },
+            DeliveryAddresses = new HashSet<DeliveryAddress>()
         };
+
+        user.DeliveryAddresses.Add(new DeliveryAddress
+        {
+            Id = reader.GetInt32("DeliveryAddressId"),
+            UserId = reader.GetInt32("Id"),
+            NameAddress = reader.GetString("NameAddress"),
+            ZipCode = reader.GetString("ZipCode"),
+            State = reader.GetString("State"),
+            City = reader.GetString("City"),
+            District = reader.GetString("District"),
+            Address = reader.GetString("Address"),
+            Number = reader.GetString("Number"),
+            Adjunct = reader.GetString("Adjunct")
+        });
     }
 }

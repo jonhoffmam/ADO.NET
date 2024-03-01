@@ -4,7 +4,7 @@ namespace eCommerce.API.Repositories;
 
 public interface IUserRepository
 {
-    public IList<User> Get();
+    public HashSet<User> Get();
     public User Get(int id);
     public User Insert(User user);
     public void Update(User user);
