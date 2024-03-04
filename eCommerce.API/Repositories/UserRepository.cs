@@ -58,11 +58,15 @@ public class UserRepository : IUserRepository
 	                                    da.District,
 	                                    da.Address,
 	                                    da.Number,
-	                                    da.Adjunct
+	                                    da.Adjunct,
+                                        ud.DepartmentId,
+                                        d.Name AS DepartmentName
                                     FROM
 	                                    Users u
 	                                    LEFT JOIN Contacts c ON c.UserId = u.Id
-	                                    LEFT JOIN DeliveryAddresses da ON da.UserId = u.Id";
+	                                    LEFT JOIN DeliveryAddresses da ON da.UserId = u.Id
+                                        LEFT JOIN UsersDepartments ud ON ud.UserId = u.Id
+	                                    LEFT JOIN Departments d ON d.Id = ud.DepartmentId";
 
             SqlCommand command = new(cmdText, (SqlConnection)_connection);
 
@@ -115,11 +119,15 @@ public class UserRepository : IUserRepository
 	                                    da.District,
 	                                    da.Address,
 	                                    da.Number,
-	                                    da.Adjunct
+	                                    da.Adjunct,
+                                        ud.DepartmentId,
+                                        d.Name AS DepartmentName
                                     FROM
 	                                    Users u
 	                                    LEFT JOIN Contacts c ON c.UserId = u.Id
 	                                    LEFT JOIN DeliveryAddresses da ON da.UserId = u.Id
+                                        LEFT JOIN UsersDepartments ud ON ud.UserId = u.Id
+	                                    LEFT JOIN Departments d ON d.Id = ud.DepartmentId
                                     WHERE
 	                                    u.Id = @Id";
                                     
@@ -238,21 +246,34 @@ public class UserRepository : IUserRepository
                 Telephone = reader.GetString("Telephone"),
                 CellPhone = reader.GetString("CellPhone")
             },
-            DeliveryAddresses = new HashSet<DeliveryAddress>()
+            DeliveryAddresses = new HashSet<DeliveryAddress>(),
+            Departments = new HashSet<Department>()
         };
 
-        user.DeliveryAddresses.Add(new DeliveryAddress
-        {
-            Id = reader.GetInt32("DeliveryAddressId"),
-            UserId = reader.GetInt32("Id"),
-            NameAddress = reader.GetString("NameAddress"),
-            ZipCode = reader.GetString("ZipCode"),
-            State = reader.GetString("State"),
-            City = reader.GetString("City"),
-            District = reader.GetString("District"),
-            Address = reader.GetString("Address"),
-            Number = reader.GetString("Number"),
-            Adjunct = reader.GetString("Adjunct")
-        });
+        int deliveryAddressId = reader.GetInt32("DeliveryAddressId");
+
+        if (user.DeliveryAddresses.All(deliveryAddress => deliveryAddress.Id != deliveryAddressId))
+            user.DeliveryAddresses.Add(new DeliveryAddress
+            {
+                Id = deliveryAddressId,
+                UserId = reader.GetInt32("Id"),
+                NameAddress = reader.GetString("NameAddress"),
+                ZipCode = reader.GetString("ZipCode"),
+                State = reader.GetString("State"),
+                City = reader.GetString("City"),
+                District = reader.GetString("District"),
+                Address = reader.GetString("Address"),
+                Number = reader.GetString("Number"),
+                Adjunct = reader.GetString("Adjunct")
+            });
+
+        int departmentId = reader.GetInt32("DepartmentId");
+
+        if (user.Departments.All(department => department.Id != departmentId))
+            user.Departments.Add(new Department
+            {
+                Id = departmentId,
+                Name = reader.GetString("DepartmentName")
+            });
     }
 }
